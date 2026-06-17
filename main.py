@@ -15,8 +15,12 @@ def calculate_real_stat(stat_type, base_stat, ability_point, nature_multiplier):
     else:
         return int((int((base_stat * 2 + 31) * 50 / 100) + 5 + ability_point) * nature_multiplier)
 
-def calculate_damage(attacker_stat, defender_stat, move_power, is_stab, type_multipiler):
+def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, is_stab, type_multipiler):
     base_damage = int((int(2 * 50 / 5 + 2) * move_power * attacker_stat / defender_stat / 50) + 2)
+    
+    # 1. ダブルバトル範囲技補正
+    if is_doubole_spread:
+        base_damage = int(base_damage * 0.75)
     
     # 5. タイプ一致
     if is_stab:
@@ -65,12 +69,19 @@ if __name__ == "__main__":
     else:
         print("無効な番号が入力されました。ソフトを終了します。")
         exit()
-        
+    
+    # ダブル補正の確認
+    print("ダブルバトルで相手複数に当たる範囲技（じしん、いわなだれ等）ですか？ (1: はい / 2: いいえ)")
+    double_input = input("番号を入力してください: ")
+    is_double_spread = (double_input == "1")
+    
+    # タイプ一致の確認     
     attacker_types = POKEMON_DATA[attacker_name]["types"]
     is_stab = move_type in attacker_types
     if is_stab:
-        print(f"\n※「{move_type}」タイプ一致ボーナス(1.5倍)が適用されます！")
+        print(f"\n※ 「{move_type}」タイプ一致ボーナス(1.5倍)が適用されます！")
 
+    #タイプ相性の確認
     defender_types = POKEMON_DATA[defender_name]["types"]
     type_multiplier = 1.0
     for def_type in defender_types:
@@ -80,12 +91,14 @@ if __name__ == "__main__":
             type_multiplier *= 1.0
             
     if type_multiplier > 1.0:
-        print(f"※効果は ばつぐん だ！ (倍率: {type_multiplier})")
+        print(f"※ 効果は ばつぐん だ！ (倍率: {type_multiplier})")
     elif type_multiplier == 0.0:
-        print(f"※効果がないみたいだ… (倍率: {type_multiplier})")
+        print(f"※ 効果がないみたいだ… (倍率: {type_multiplier})")
     elif type_multiplier < 1.0:
-        print(f"※効果は いまひとつ だ… (倍率: {type_multiplier})")
+        print(f"※ 効果は いまひとつ だ… (倍率: {type_multiplier})")
         
+    if is_double_spread:
+        print("※ ダブルバトルの範囲技補正(0.75倍)が適用されます！")
 
     # 4. 能力ポイント・性格補正の入力
     print(f"\n--- ステータス詳細を入力 ({category_name}想定) ---")
@@ -116,7 +129,7 @@ if __name__ == "__main__":
     print(f"{defender_name}の{def_key}実数値: {defender_real_stat}")
 
     # ダメージ計算
-    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_stab, type_multiplier)
+    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, is_stab, type_multiplier)
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
 
     # 割合計算
