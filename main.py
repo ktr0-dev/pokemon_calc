@@ -15,12 +15,15 @@ def calculate_real_stat(stat_type, base_stat, ability_point, nature_multiplier):
     else:
         return int((int((base_stat * 2 + 31) * 50 / 100) + 5 + ability_point) * nature_multiplier)
 
-def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, is_stab, type_multipiler):
+def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, weather_multiplier, is_stab, type_multipiler):
     base_damage = int((int(2 * 50 / 5 + 2) * move_power * attacker_stat / defender_stat / 50) + 2)
     
     # 1. ダブルバトル範囲技補正
     if is_doubole_spread:
         base_damage = int(base_damage * 0.75)
+        
+    # 2. 天候補正
+    base_damage = int(base_damage * weather_multiplier)
     
     # 5. タイプ一致
     if is_stab:
@@ -75,6 +78,26 @@ if __name__ == "__main__":
     double_input = input("番号を入力してください: ")
     is_double_spread = (double_input == "1")
     
+    # 天候の確認
+    print("現在の天候を選んでください (1: 通常 / 2: 晴れ / 3: 雨)")
+    weather_input = input("番号を入力してください: ")
+    
+    weather_multiplier = 1.0
+    weather_name = "通常"
+
+    if weather_input == "2":
+        weather_name = "晴れ"
+        if move_type == "ほのお":
+            weather_multiplier = 1.5
+        elif move_type == "みず":
+            weather_multiplier = 0.5
+    elif weather_input == "3":
+        weather_name = "雨"
+        if move_type == "みず":
+            weather_multiplier = 1.5
+        elif move_type == "ほのお":
+            weather_multiplier = 0.5
+    
     # タイプ一致の確認     
     attacker_types = POKEMON_DATA[attacker_name]["types"]
     is_stab = move_type in attacker_types
@@ -89,16 +112,21 @@ if __name__ == "__main__":
             type_multiplier *= TYPE_CHART[move_type][def_type]
         else:
             type_multiplier *= 1.0
-            
+    
+    # タイプ相性の表示        
     if type_multiplier > 1.0:
         print(f"※ 効果は ばつぐん だ！ (倍率: {type_multiplier})")
     elif type_multiplier == 0.0:
         print(f"※ 効果がないみたいだ… (倍率: {type_multiplier})")
     elif type_multiplier < 1.0:
         print(f"※ 効果は いまひとつ だ… (倍率: {type_multiplier})")
-        
+    
+    # 特殊な補正メッセージの表示
     if is_double_spread:
         print("※ ダブルバトルの範囲技補正(0.75倍)が適用されます！")
+    if weather_multiplier != 1.0:
+        print(f"※ 天候「{weather_name}」による補正({weather_multiplier}倍)が適用されます！")    
+        
 
     # 4. 能力ポイント・性格補正の入力
     print(f"\n--- ステータス詳細を入力 ({category_name}想定) ---")
@@ -129,7 +157,7 @@ if __name__ == "__main__":
     print(f"{defender_name}の{def_key}実数値: {defender_real_stat}")
 
     # ダメージ計算
-    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, is_stab, type_multiplier)
+    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_stab, type_multiplier)
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
 
     # 割合計算
