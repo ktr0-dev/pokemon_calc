@@ -29,17 +29,21 @@ def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread
     if is_critical:
         base_damage = int(base_damage * 1.5)
     
-    # 5. タイプ一致
-    if is_stab:
-        base_damage = int(base_damage * 1.5)
+    # 4. 乱数補正
+    damage_list = []
+    for r in range(85, 101):
+        current_dmg = int(base_damage * r / 100)
     
-    # 6. タイプ相性
-    base_damage = int(base_damage * type_multipiler)
+        # 5. タイプ一致
+        if is_stab:
+            current_dmg = int(current_dmg * 1.5)
     
-    min_damage = int(base_damage * 0.85)
-    max_damage = int(base_damage * 1.0)
+        # 6. タイプ相性
+        current_dmg = int(current_dmg * type_multipiler)
+        
+        damage_list.append(current_dmg)
     
-    return min_damage, max_damage
+    return damage_list[0], damage_list[-1], damage_list
 
 # 3. 実行部分
 if __name__ == "__main__":
@@ -167,8 +171,12 @@ if __name__ == "__main__":
     print(f"{defender_name}の{def_key}実数値: {defender_real_stat}")
 
     # ダメージ計算
-    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier)
+    min_dmg, max_dmg, all_damages = calculate_damage(
+        attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier
+    )
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
+
+    print(f"16段階のダメージ詳細: {all_damages}")
 
     # 割合計算
     if type_multiplier == 0.0:
