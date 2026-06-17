@@ -15,7 +15,7 @@ def calculate_real_stat(stat_type, base_stat, ability_point, nature_multiplier):
     else:
         return int((int((base_stat * 2 + 31) * 50 / 100) + 5 + ability_point) * nature_multiplier)
 
-def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, weather_multiplier, is_stab, type_multipiler):
+def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, weather_multiplier, is_critical, is_stab, type_multipiler):
     base_damage = int((int(2 * 50 / 5 + 2) * move_power * attacker_stat / defender_stat / 50) + 2)
     
     # 1. ダブルバトル範囲技補正
@@ -24,6 +24,10 @@ def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread
         
     # 2. 天候補正
     base_damage = int(base_damage * weather_multiplier)
+    
+    # 3. 急所補正
+    if is_critical:
+        base_damage = int(base_damage * 1.5)
     
     # 5. タイプ一致
     if is_stab:
@@ -97,6 +101,11 @@ if __name__ == "__main__":
             weather_multiplier = 1.5
         elif move_type == "ほのお":
             weather_multiplier = 0.5
+            
+    # 急所の確認
+    print("急所に当たりましたか？ (1: はい / 2: いいえ)")
+    crit_input = input("番号を入力してください: ")
+    is_critical = (crit_input == "1")
     
     # タイプ一致の確認     
     attacker_types = POKEMON_DATA[attacker_name]["types"]
@@ -126,7 +135,8 @@ if __name__ == "__main__":
         print("※ ダブルバトルの範囲技補正(0.75倍)が適用されます！")
     if weather_multiplier != 1.0:
         print(f"※ 天候「{weather_name}」による補正({weather_multiplier}倍)が適用されます！")    
-        
+    if is_critical:
+        print("※急所に当たった！(1.5倍補正)が適用されます！")
 
     # 4. 能力ポイント・性格補正の入力
     print(f"\n--- ステータス詳細を入力 ({category_name}想定) ---")
@@ -157,7 +167,7 @@ if __name__ == "__main__":
     print(f"{defender_name}の{def_key}実数値: {defender_real_stat}")
 
     # ダメージ計算
-    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_stab, type_multiplier)
+    min_dmg, max_dmg = calculate_damage(attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier)
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
 
     # 割合計算
