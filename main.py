@@ -15,7 +15,7 @@ def calculate_real_stat(stat_type, base_stat, ability_point, nature_multiplier):
     else:
         return int((int((base_stat * 2 + 31) * 50 / 100) + 5 + ability_point) * nature_multiplier)
 
-def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, weather_multiplier, is_critical, is_stab, type_multipiler):
+def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread, weather_multiplier, is_critical, is_stab, type_multipiler, is_burned_physical):
     base_damage = int((int(2 * 50 / 5 + 2) * move_power * attacker_stat / defender_stat / 50) + 2)
     
     # 1. ダブルバトル範囲技補正
@@ -40,6 +40,10 @@ def calculate_damage(attacker_stat, defender_stat, move_power, is_doubole_spread
     
         # 6. タイプ相性
         current_dmg = int(current_dmg * type_multipiler)
+
+        # 7. 物理技でやけど状態の場合の補正
+        if is_burned_physical:
+            current_dmg = int(current_dmg * 0.5)
         
         damage_list.append(current_dmg)
     
@@ -65,18 +69,26 @@ if __name__ == "__main__":
     print("\n--- 技の情報を入力 ---")
     move_power = int(input("攻撃技の威力を入力してください（例: 100）: "))
     move_type = input("攻撃技のタイプを入力してください（例: じめん）: ")
+    if move_power <= 0:
+        print("威力は正の整数で入力してください。ソフトを終了します。")
+        exit()
+    if move_type not in TYPE_CHART:
+        print("そのタイプは登録されていません。ソフトを終了します。")
+        exit()
     
     print("技の分類を選んでください (1: 物理技 / 2: 特殊技)")
     move_category = input("番号を入力してください: ")
-
+    
     if move_category == "1":
         atk_key = "A"
         def_key = "B"
         category_name = "物理"
+        is_physical = True
     elif move_category == "2":
         atk_key = "C"
         def_key = "D"
         category_name = "特殊"
+        is_physical = False
     else:
         print("無効な番号が入力されました。ソフトを終了します。")
         exit()
@@ -125,7 +137,12 @@ if __name__ == "__main__":
             type_multiplier *= TYPE_CHART[move_type][def_type]
         else:
             type_multiplier *= 1.0
-    
+
+    # 物理技でやけど状態の確認
+    print("攻撃側はやけど状態ですか？ (1: はい / 2: いいえ)")
+    burned_input = input("番号を入力してください: ")
+    is_burned_physical = is_physical and (burned_input == "1")
+
     # タイプ相性の表示        
     if type_multiplier > 1.0:
         print(f"※ 効果は ばつぐん だ！ (倍率: {type_multiplier})")
@@ -141,6 +158,8 @@ if __name__ == "__main__":
         print(f"※ 天候「{weather_name}」による補正({weather_multiplier}倍)が適用されます！")    
     if is_critical:
         print("※急所に当たった！(1.5倍補正)が適用されます！")
+    if is_burned_physical:
+        print("※攻撃側はやけど状態のため、物理技の威力が半減します！(0.5倍補正)")
 
     # 4. 能力ポイント・性格補正の入力
     print(f"\n--- ステータス詳細を入力 ({category_name}想定) ---")
@@ -172,7 +191,7 @@ if __name__ == "__main__":
 
     # ダメージ計算
     min_dmg, max_dmg, all_damages = calculate_damage(
-        attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier
+        attacker_real_stat, defender_real_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier, is_burned_physical
     )
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
 
