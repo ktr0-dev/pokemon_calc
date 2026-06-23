@@ -186,13 +186,12 @@ if __name__ == "__main__":
         print(f"\n※ 「{move_type}」タイプ一致ボーナス(1.5倍)が適用されます！")
 
     #タイプ相性の確認
+    # タイプ相性の確認
     defender_types = POKEMON_DATA[defender_name]["types"]
     type_multiplier = 1.0
     for def_type in defender_types:
-        if move_type in TYPE_CHART and def_type in TYPE_CHART[move_type]:
-            type_multiplier *= TYPE_CHART[move_type][def_type]
-        else:
-            type_multiplier *= 1.0
+        target_chart = TYPE_CHART.get(move_type, {})
+        type_multiplier *= target_chart.get(def_type.strip(), 1.0)
 
     # 物理技でやけど状態の確認
     print("攻撃側はやけど状態ですか？ (1: はい / 2: いいえ)")
