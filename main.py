@@ -15,7 +15,7 @@ def calculate_real_stat(stat_type, base_stat, ability_point, nature_multiplier):
     else:
         return int((int((base_stat * 2 + 31) * 50 / 100) + 5 + ability_point) * nature_multiplier)
 
-def calculate_damage(attacker_stat, defender_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier, is_burned_physical, wall_multiplier=1.0):
+def calculate_damage(attacker_stat, defender_stat, move_power, is_double_spread, weather_multiplier, is_critical, is_stab, type_multiplier, is_burned_physical, wall_multiplier, item_multiplier):
     base_damage = int((int(2 * 50 / 5 + 2) * move_power * attacker_stat / defender_stat / 50) + 2)
     
     # 1. ダブルバトル範囲技補正
@@ -47,6 +47,9 @@ def calculate_damage(attacker_stat, defender_stat, move_power, is_double_spread,
 
         # 8. 壁のダメージ軽減
         current_dmg = int(current_dmg * wall_multiplier)
+
+        # 9. アイテム補正
+        current_dmg = int(current_dmg * item_multiplier)
         
         damage_list.append(current_dmg)
     
@@ -164,6 +167,25 @@ if __name__ == "__main__":
         if is_wall:
             wall_multiplier = 2 / 3 if is_double_battle else 0.5
 
+    # 攻撃側の持ち物の確認
+    print("攻撃側の持ち物を選んでください (1: なし / 2: いのちのたま[1.3倍] / 3: たつじんのおび[ばつぐん時1.2倍] / 4: タイプ強化アイテム[1.2倍])")
+    item_input = input("番号を入力してください: ")
+    item_multiplier = 1.0
+    item_name = ""
+    
+    if item_input == "2":
+        item_multiplier = 1.3
+        item_name = "いのちのたま"
+    elif item_input == "3":
+        if type_multiplier > 1.0:
+            item_multiplier = 1.2
+            item_name = "たつじんのおび"
+        else:
+            item_multiplier = 1.0 # ばつぐんじゃない場合は補正なし
+    elif item_input == "4":
+        item_multiplier = 1.2
+        item_name = "タイプ強化アイテム"
+
     # タイプ相性の表示        
     if type_multiplier > 1.0:
         print(f"※ 効果は ばつぐん だ！ (倍率: {type_multiplier})")
@@ -184,6 +206,8 @@ if __name__ == "__main__":
     if is_wall:
         wall_label = "ダブル" if is_double_battle else "シングル"
         print(f"※ 壁によるダメージ軽減({wall_label}で{wall_multiplier:.3g}倍)が適用されます！")
+    if item_multiplier != 1.0:
+        print(f"※ 持ち物「{item_name}」による補正({item_multiplier}倍)が適用されます！")
 
     # 4. 能力ポイント・性格補正の入力
     print(f"\n--- ステータス詳細を入力 ({category_name}想定) ---")
@@ -225,6 +249,7 @@ if __name__ == "__main__":
         type_multiplier,
         is_burned_physical,
         wall_multiplier,
+        item_multiplier
     )
     print(f"ダメージ乱数幅: {min_dmg} ~ {max_dmg}")
 
