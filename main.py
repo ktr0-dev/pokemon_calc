@@ -55,6 +55,48 @@ def calculate_damage(attacker_stat, defender_stat, move_power, is_double_spread,
     
     return damage_list[0], damage_list[-1], damage_list
 
+def calculate_required_hits(all_damages, defender_hp, type_multiplier):
+
+    if type_multiplier == 0.0:
+        return "技が無効なため、倒すことはできません。"
+        
+    min_dmg = all_damages[0]
+    max_dmg = all_damages[-1]
+    
+    # 1. 確定1発 / 乱数1発の計算
+    ohko_count = sum(1 for d in all_damages if d >= defender_hp)
+    ohko_probability = (ohko_count / 16) * 100
+
+    if min_dmg >= defender_hp:
+        return "確定 1 発（100%の確率でひんし）"
+    elif max_dmg >= defender_hp:
+        return f"乱数 1 発（{ohko_probability:.1f}% の確率でひんし）"
+        
+    # 2. 乱数2発 / 確定2発の計算
+    min_dmg_2hits = min_dmg * 2
+    max_dmg_2hits = max_dmg * 2
+    
+    if min_dmg_2hits >= defender_hp:
+        return "確定 2 発"
+    elif max_dmg_2hits >= defender_hp:
+        # 2発の組み合わせ（256通り）
+        two_hits_count = 0
+        for d1 in all_damages:
+            for d2 in all_damages:
+                if d1 + d2 >= defender_hp:
+                    two_hits_count += 1
+        two_hits_probability = (two_hits_count / 256) * 100
+        return f"乱数 2 発（{two_hits_probability:.1f}% の確率でひんし）"
+        
+    # 3. 3発目以降の概算
+    min_hits = (defender_hp + max_dmg - 1) // max_dmg
+    max_hits = (defender_hp + min_dmg - 1) // min_dmg
+    
+    if min_hits == max_hits:
+        return f"確定 {min_hits} 発"
+    else:
+        return f"乱数 {min_hits} 発 〜 確定 {max_hits} 発"
+
 # 3. 実行部分
 if __name__ == "__main__":
     print("=== ポケモンチャンピオンズ ダメージ計算ソフト ===")
@@ -262,3 +304,7 @@ if __name__ == "__main__":
         min_percent = (min_dmg / defender_real_h) * 100
         max_percent = (max_dmg / defender_real_h) * 100
         print(f"相手のHPに対する割合: {min_percent:.1f}% ~ {max_percent:.1f}%")
+
+    # 確定数の計算
+    required_hits_message = calculate_required_hits(all_damages, defender_real_h, type_multiplier)
+    print(f"必要なヒット数: {required_hits_message}")
